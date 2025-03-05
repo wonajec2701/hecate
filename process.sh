@@ -18,6 +18,11 @@ rm cro.gz
 gzip cro
 cd ..
 
+
+cd data/figure
+ls | xargs -i convert {} {}.png
+cd ..
+
 current_date=$(date +%Y-%m-%d)
 git add .
 git commit -m "$current_date"
