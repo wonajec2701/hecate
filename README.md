@@ -26,3 +26,23 @@ The CRO data is stored in the `data/cro.gz` and `cro_new.gz`
 
 The repo contains the following directories:
 
+### Requirements
+
+Routinator https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
+
+Python3 https://www.python.org/downloads/
+
+### Workflow
+```
+git clone https://github.com/wonajec2701/hecate.git
+mkdir /home/demo
+mv hecate/code/multi_source_data /home/demo/multi_source_data
+```
+```
+crontab -e
+```
+add next commands:
+```
+20 0 * * * /home/demo/multi_source_data/start_bgp_roa.sh
+10 1 * * * /home/demo/multi_source_data/start.sh
+```
