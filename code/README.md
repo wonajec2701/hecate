@@ -9,7 +9,7 @@ Python3 https://www.python.org/downloads/
 ## Workflow
 ```
 git clone https://github.com/wonajec2701/hecate.git
-mkdir /home/demo
+mkdir /home/demo # adduser demo
 mv hecate/code/multi_source_data /home/demo/multi_source_data
 ```
 ```
