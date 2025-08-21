@@ -96,8 +96,20 @@ def process_bgp(f, data, spemap_v4, spemap_v6):
 def process_irr(f, data, spemap_v4, spemap_v6):
     f1 = open(f, 'r', encoding = "ISO-8859-1")
     for line in f1:
-        prefix = line.split(' ')[1].split('\n')[0]
-        asn = int(line.split(' ')[0])
+        try:
+            prefix = line.split(' ')[1]
+        except:
+            print(line)
+            continue
+        try:
+            asn = int(line.split(' ')[0])
+        except:
+            print(line)
+            continue
+        try:
+            source = line.split(' ')[2].split('\n')[0]
+        except:
+            source = 'None'
         pfx = prefix.split('/')[0]
         try:
             pl = int(prefix.split('/')[1])
@@ -111,23 +123,18 @@ def process_irr(f, data, spemap_v4, spemap_v6):
             continue
         if prefix == '0.0.0.0/0' or prefix == '::/0':
             continue
-        '''
-        if ':' in pfx and pfx in bogon_ip_dict_v6:
-            continue
-        if '.' in pfx and pfx in bogon_ip_dict_v4:
-            continue
-        if asn in bogon_asn:
-            continue
-        '''
+        maxlen = pl
         if (prefix, asn, maxlen) not in data:
             data[(prefix, asn, maxlen)] = {}
             data[(prefix, asn, maxlen)]['num'] = 1
+            data[(prefix, asn, maxlen)]['source'] = 'IRR'
+            data[(prefix, asn, maxlen)]['sub-source'] = source
             data[(prefix, asn, maxlen)]['valid'] = []
-            data[(prefix, asn, maxlen)]['invalid'] = []
+            data[(prefix, asn, maxlen)]['result'] = 'unknown'
         else:
             data[(prefix, asn, maxlen)]['num'] += 1
     f1.close()
-    
+
 
 
 def process_roa(f, data, spemap_v4, spemap_v6):

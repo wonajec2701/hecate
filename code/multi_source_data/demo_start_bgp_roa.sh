@@ -2,6 +2,7 @@
 
 current_date=$(date +%Y-%m-%d)
 mkdir -p "/home/demo/multi_source_data/$current_date"
+password="" #add your password here
 
 log_file="/home/demo/multi_source_data/$current_date/execution_log.txt"
 echo "$(date) Execution started" >> "$log_file"
@@ -21,7 +22,7 @@ cd ..
 
 
 #download roa
-routinator --config=/etc/routinator/routinator.conf vrps -o "$current_date/roa_data/$current_date-0000" -f jsonext &
+echo $password | sudo -S routinator --config=/etc/routinator/routinator.conf vrps -o "$current_date/roa_data/$current_date-0000" -f jsonext &
 
 #download bgp route
 python3 bgp_download_ripe.py "$current_date" &

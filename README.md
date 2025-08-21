@@ -51,6 +51,8 @@ git clone https://github.com/wonajec2701/hecate.git
 # git fetch --unshallow
 mkdir /home/demo   # adduser demo
 mv hecate/code/multi_source_data /home/demo/multi_source_data
+# please replace YOUR_PASSWORD with your actual password below.
+sed -i '5s/password=""/password="YOUR_PASSWORD"/' demo_start_bgp_roa.sh 
 ```
 ```
 crontab -e

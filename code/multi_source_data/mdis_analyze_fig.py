@@ -2,7 +2,7 @@ from matplotlib_venn import venn2, venn2_circles, venn3, venn3_circles
 import matplotlib.pyplot as plt
 from source_analysis import checkspepfx, checkspeasn, private_ip_list_v4, private_ip_list_v6
 from source_analysis import getspemap, getroamap, getpfxmap, getpfxbin
-from irr_filter import process_irr
+from source_analysis import process_irr
 import sys
 from datetime import datetime, timedelta
 import json

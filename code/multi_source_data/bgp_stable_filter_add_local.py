@@ -1,4 +1,4 @@
-from irr_filter import private_ip_list_v4, private_ip_list_v6, checkspepfx, checkspeasn
+from source_analysis import private_ip_list_v4, private_ip_list_v6, checkspepfx, checkspeasn
 import numpy as np
 import copy
 from datetime import datetime, timedelta
