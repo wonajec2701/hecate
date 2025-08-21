@@ -21,6 +21,7 @@ cd ..
 
 cd data/figure
 ls | xargs -i convert {} {}.png
+rm *.png.png
 cd ..
 
 current_date=$(date +%Y-%m-%d)

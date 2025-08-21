@@ -46,6 +46,9 @@ sudo apt install bgpdump
 ### Workflow
 ```
 git clone https://github.com/wonajec2701/hecate.git
+# if you cannot clone, please try:
+# git clone --depth 1 https://github.com/wonajec2701/hecate.git
+# git fetch --unshallow
 mkdir /home/demo   # adduser demo
 mv hecate/code/multi_source_data /home/demo/multi_source_data
 ```
