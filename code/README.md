@@ -2,17 +2,20 @@
 
 ## Requirements
 
-Routinator https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
+Routinator: https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
 
-Python3 https://www.python.org/downloads/
+Python3: https://www.python.org/downloads/
 
-bgpdump
+Python3 packages: tqdm
+
+bgpdump:
 ```
-Ubuntu
+For Ubuntu
 
 sudo apt update
 sudo apt install bgpdump
 ```
+
 
 ## Workflow
 ```
@@ -25,6 +28,6 @@ crontab -e
 ```
 add next commands:
 ```
-20 0 * * * /home/demo/multi_source_data/start_bgp_roa.sh
-10 1 * * * /home/demo/multi_source_data/start.sh
+20 0 * * * /home/demo/multi_source_data/demo_start_bgp_roa.sh
+10 1 * * * /home/demo/multi_source_data/demo_start_irr.sh
 ```

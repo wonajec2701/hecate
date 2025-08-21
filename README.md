@@ -28,9 +28,20 @@ The repo contains the following directories:
 
 ### Requirements
 
-Routinator https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
+Routinator: https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
 
-Python3 https://www.python.org/downloads/
+Python3: https://www.python.org/downloads/
+
+Python3 packages: tqdm
+
+bgpdump:
+```
+For Ubuntu
+
+sudo apt update
+sudo apt install bgpdump
+```
+
 
 ### Workflow
 ```

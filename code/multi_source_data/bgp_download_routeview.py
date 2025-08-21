@@ -2,7 +2,7 @@ import sys
 import os
 import subprocess
 import concurrent.futures
-from datetime import datetime
+from datetime import datetime, timedelta
 
 date = sys.argv[1]
 year, month, day = date.split('-')
