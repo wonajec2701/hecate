@@ -43,6 +43,6 @@ crontab -e
 ```
 add next commands:
 ```
-20 0 * * * /home/demo/multi_source_data/start_bgp_roa.sh
-10 1 * * * /home/demo/multi_source_data/start.sh
+20 0 * * * /home/demo/multi_source_data/demo_start_bgp_roa.sh
+10 1 * * * /home/demo/multi_source_data/demo_start_irr.sh
 ```

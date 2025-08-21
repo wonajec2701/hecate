@@ -36,6 +36,8 @@ cp "$current_date/roa_data/$current_date-0000" roa_data/roa_data_now.json
 python3 bgp_stable_filter_add_local.py "$current_date" 22
 cp "$current_date/bgp_filter_data/bgp_frequency" cro_data/bgp_frequency
 
+./demo_download_caida.sh
+
 end_time=$(date +%s)
 runtime=$((end_time - start_time))
 echo "$(date) BGP Download finished, used $runtime seconds" >> "$log_file"

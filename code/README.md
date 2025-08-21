@@ -6,6 +6,14 @@ Routinator https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
 
 Python3 https://www.python.org/downloads/
 
+bgpdump
+```
+Ubuntu
+
+sudo apt update
+sudo apt install bgpdump
+```
+
 ## Workflow
 ```
 git clone https://github.com/wonajec2701/hecate.git
