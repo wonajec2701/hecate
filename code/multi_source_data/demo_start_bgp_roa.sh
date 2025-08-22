@@ -36,6 +36,8 @@ cp "$current_date/roa_data/$current_date-0000" roa_data/roa_data_now.json
 #process bgp
 python3 bgp_stable_filter_add_local.py "$current_date" 22
 cp "$current_date/bgp_filter_data/bgp_frequency" cro_data/bgp_frequency
+formatted_date=$(echo "$current_date" | sed 's/-//g')
+cp "$current_date/bgp_route/checklog/total/total-json-${formatted_date}-nopch.json" cro_data/bgp_current
 
 ./demo_download_caida.sh
 
