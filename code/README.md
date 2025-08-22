@@ -6,7 +6,7 @@ Routinator: https://routinator.docs.nlnetlabs.nl/en/stable/index.html#
 
 Python3: https://www.python.org/downloads/
 
-Python3 packages: tqdm
+Python3 packages: tqdm, numpy, pandas, matplotlib_venn
 
 bgpdump:
 ```
@@ -15,6 +15,7 @@ For Ubuntu
 sudo apt update
 sudo apt install bgpdump
 ```
+
 
 
 ## Workflow
@@ -60,13 +61,13 @@ Daily CRO File:
 ### For local routes validation (Should generate daily CRO first):
 ```
 mv hecate/code/route_analyze /home/demo/route_analyze
-# please replace YOUR_PASSWORD with your actual password below.
-sed -i '5s/password=""/password="YOUR_PASSWORD"/' demo_local.sh
 ```
 
 #### Three files from your own local routers:
 1.current-total-with-path
+
 All BGP updates periodically (every five minutes in our paper)
+
 Format:
 ``` 
 YYYY-MM_DD HH:MM:SS.ffffff ASN Prefix validation-result [AS-PATH]
@@ -74,7 +75,9 @@ E.g. 2025-08-13 07:22:49.255896 25773 66.22.3.0/24 valid [xxxx 1xxx 198949 25773
 ```
 
 2.YYYY-MM-DD/parsed-rib-ipv4
+
 Daily local rib with ipv4 routes
+
 Format:
 ``` 
 ASN Prefix router-result
@@ -82,7 +85,9 @@ E.g. 13335 1.0.0.0/24 valid
 ```
 
 3.YYYY-MM-DD/parsed-rib-ipv6
+
 Daily local rib with ipv6 routes
+
 Format:
 ``` 
 ASN Prefix router-result
