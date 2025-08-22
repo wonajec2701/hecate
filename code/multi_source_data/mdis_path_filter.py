@@ -55,7 +55,7 @@ def as_analysis(invalid_asn_prefix_file,asn_org,invalid_as_file,as_org_list):
         #============invalid_asn_freq
         print("invalid_asn_freq")
         invalid_asn=[]
-        invalid_asn_freq=[0]*401500
+        invalid_asn_freq=[0]*411500
         private_as_org_freq=[]
         private_as_org_record=[]
         invalid_asn_sum=0
@@ -65,7 +65,7 @@ def as_analysis(invalid_asn_prefix_file,asn_org,invalid_as_file,as_org_list):
             if not match:
                 match = re.match(r"AS(\d{1,11}) (.*/\d{1,3}) (.*)",invalid_route)
             invalid_asn.append(int(match.group(1)))
-            if int(match.group(1))>401309:
+            if int(match.group(1))>411500:
                 if int(match.group(1)) not in private_as_org_record:
                     #print(int(match.group(1)))
                     invalid_asn_freq_private={
@@ -347,7 +347,7 @@ def main():
     #return
     #============as_org_list
     asn_org=f'CAIDA/as_org/as-org2info.txt'
-    as_org_list=[0]*401500
+    as_org_list=[0]*411500
     with open(asn_org,'r') as as_name:
         print("as_org_list")
         data_lines=as_name.readlines()

@@ -1,7 +1,6 @@
 import os
 import sys
 import copy
-import addr
 import netaddr
 import ipaddress
 from datetime import datetime, timedelta

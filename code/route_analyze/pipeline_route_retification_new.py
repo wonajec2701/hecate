@@ -1178,7 +1178,7 @@ def main():
     thread1 = threading.Thread(target=read_CRO, args=(cro_file,))
     thread1_roa = threading.Thread(target=read_ROA, args=(roa_file,))
     thread2 = threading.Thread(target=read_roa_aggregate, args=(cro_aggregate_file,))
-    thread3 = threading.Thread(target=process_irr, args=(irr4irr4_file_file, irr6_file, spemap_v4, spemap_v6,))
+    thread3 = threading.Thread(target=process_irr, args=(irr4_file, irr6_file, spemap_v4, spemap_v6,))
     thread4 = threading.Thread(target=process_bgp_total, args=(bgp_frequency_file,))
     thread5 = threading.Thread(target=process_asrel, args=(asrel_file,))
     thread6 = threading.Thread(target=process_as2org, args=(as2org_file,))

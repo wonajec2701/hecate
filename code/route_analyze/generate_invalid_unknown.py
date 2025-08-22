@@ -267,17 +267,13 @@ def process_bgp(file, data, spemap_v4, spemap_v6):
 
             
 
-def analyze_validate(data_roa, data_bgp, spemap_v4, spemap_v6, data_cro_total, record_flag, flag=''):
+def analyze_validate(data_roa, data_bgp, spemap_v4, spemap_v6, flag=''):
 
     results_v4, results_v6, invalid, unknown, valid = rov(data_bgp, data_roa, spemap_v4, spemap_v6, flag)
     with open(f"{current_directory}/execution_log.txt",'a') as log:
         log.write(f"cro-ipv4: {results_v4[0]}, {results_v4[1]}, {results_v4[2]}, {results_v4[3]}\n")
         log.write(f"cro-ipv6: {results_v6[0]}, {results_v6[1]}, {results_v6[2]}, {results_v6[3]}\n")
     print("cro: ", results_v4, results_v6)
-
-    if record_flag:
-        update_CRO_total(data_roa, data_cro_total, data_bgp)
-
 
     num = 0
 
@@ -353,6 +349,9 @@ def main():
         log.write(f"roa-ipv4: {roa_results_v4[0]}, {roa_results_v4[1]}, {roa_results_v4[2]}, {roa_results_v4[3]}\n")
         log.write(f"roa-ipv6: {roa_results_v6[0]}, {roa_results_v6[1]}, {roa_results_v6[2]}, {roa_results_v6[3]}\n")
     print("roa: ", roa_results_v4, roa_results_v6)
+
+    data_cro, data_cro_asn = read_CRO(cro_file)
+    invalid, unknown = analyze_validate(data_cro, data_bgp, spemap_v4, spemap_v6, content)
 
 
     with open(f"{current_directory}/execution_log.txt",'a') as log:

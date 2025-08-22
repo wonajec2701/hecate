@@ -141,7 +141,7 @@ def get_as_org(as_org_list,asn):
     if not isinstance(asn,int):
 
         asn=int(asn)
-    if asn>=401500:
+    if asn>=411500:
         as_org_name='private'
         return as_org_name
     if as_org_list[asn]==0:
@@ -156,7 +156,7 @@ def same_as_org(as_org_list,asn1,asn2):
         asn1=int(asn1)
     if not isinstance(asn2,int):
         asn2=int(asn2)
-    if asn1>=401309 or asn2>=401309:
+    if asn1>=411500 or asn2>=411500:
         return False
     elif as_org_list[asn1]==0 or as_org_list[asn2]==0:
         return False
@@ -764,7 +764,7 @@ def main():
     #return
     #============as_org_list
     asn_org=f'CAIDA/as_org/as-org2info.txt'
-    as_org_list=[0]*401500
+    as_org_list=[0]*411500
     with open(asn_org,'r') as as_name:
         print("as_org_list")
         data_lines=as_name.readlines()

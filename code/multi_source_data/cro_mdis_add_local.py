@@ -1,4 +1,4 @@
-from mdis_analyze_invalid import getspemap, private_ip_list_v4, private_ip_list_v6
+from source_analysis import getspemap, private_ip_list_v4, private_ip_list_v6
 from cro_mdis_add import checkspeasn, checkspepfx
 from datetime import datetime, timedelta
 import sys
@@ -183,6 +183,8 @@ def main():
         log.write(content + " bgp filter used " + str(num) + " days date, added " + str(num_record) + " records from " + str(len(data)) + " bgp routes.\n")
     
     cro_file = current_directory + '/cro_data/cro_mdis_' + current_directory
+    if not os.path.exists(cro_file):
+        cro_file = current_directory + '/cro_data/cro_mdis_initial_' + current_directory
     new_cro_file = current_directory + '/bgp_filter_data/bgp_frequent_'+content
     total_cro_file = current_directory + '/cro_data/cro_mdis_initial_' + current_directory + '_' + content
     num = read_rectification_cro(cro_file, new_cro_file, total_cro_file, spemap_v4, spemap_v6)

@@ -1,11 +1,11 @@
 import os, sys
 import copy
-import addr, json
+import json
 import netaddr
 import ipaddress
 from tqdm import tqdm
 from datetime import datetime, timedelta
-from mdis_analyze_invalid import getspemap, private_ip_list_v4, private_ip_list_v6
+from source_analysis import getspemap, private_ip_list_v4, private_ip_list_v6
 current_directory = sys.argv[1]
 content = sys.argv[2]
 if content == 'None':
@@ -127,9 +127,6 @@ def createpfxmap(pfxmap, asns, ip, pfxlen):
         s = pfxmap[length][pfxbin]
         s['prefix'] = [ip + '/' + str(pfxlen)]
         s['asns'] = [asns]
-    #for asn in asns:
-        #a.add(asn)
-        #a.add(asns)
     else:
         s = pfxmap[length][pfxbin]
         s['prefix'].append(ip + '/' + str(pfxlen))
@@ -173,8 +170,6 @@ def process_roa(f, data, flag='ROA'):
         validity_notAfter = line.split("notAfter\": \"")[1].split("\"")[0]
         chainValidity_notBefore = line.split("chainValidity\"")[1].split("notBefore\": \"")[1].split("\"")[0]
         chainValidity_notAfter = line.split("chainValidity\"")[1].split("notAfter\": \"")[1].split("\"")[0]
-        #if 64512 < asn < 65535:
-        #    print("Error", prefix, asn, maxLength)
         pfx = prefix.split('/')[0]
         pl = int(prefix.split('/')[1].split('\n')[0])
         if (prefix, asn, maxLength) not in data:
@@ -207,8 +202,6 @@ def roa_aggregate(data_asn, data):
             networks = []
             temp_list = copy.deepcopy(data_asn[key][maxlen])
             for prefix in data_asn[key][maxlen]:
-                #prefix = temp[0]
-                #network = ipaddress.IPv4Network(prefix, strict=False)
                 networks.append(prefix)
             new_networks = netaddr.cidr_merge(networks)
             for temp in new_networks:
@@ -339,12 +332,6 @@ def read_rectification_cro(new_cro_file, spemap_v4, spemap_v6):
         maxLength = int(line_list[2].split('\n')[0])
         pfx = prefix.split('/')[0]
         pl = int(prefix.split('/')[1].split('\n')[0])
-        '''
-        if '.' in prefix and pl > 24:
-            continue
-        if ':' in prefix and pl > 48:
-            continue
-        '''
         if ':' in prefix and checkspepfx(spemap_v6, pfx, pl)==True:
             continue
         if '.' in prefix and checkspepfx(spemap_v4, pfx, pl)==True:
@@ -419,8 +406,6 @@ def aggregate_roas(roas):
     # aggregate roas
     pbar = tqdm(total=len(roas_by_asn), desc="", leave=True)
     for asn in roas_by_asn.keys():
-        # if asn != 'AS0':
-        #     continue
         pbar.set_description(f"Processing {asn}")
         agg_set = {}
         #ipv4
@@ -431,8 +416,6 @@ def aggregate_roas(roas):
         for cro in roas_by_asn[asn]:
             cro_v4_num += 1
             prefix_ip = ipaddress.ip_network(cro['prefix'])
-            #  {"asn": "AS13335", "prefix": "1.0.0.0/24", "maxLength": 24, "source": [{"type": "ROA, IRR, BGP", "uri": "rsync://rpki.apnic.net/member_repository/A91872ED/ED8C96901D6C11E28A38A3AD08B02CD2/797B4DEC293B11E8B187196DC4F9AE02.roa", "tal": "ROA-APNIC, IRR-APNIC", "validity": {"notBefore": "2021-02-11T14:20:11Z", "notAfter": "2031-03-31T00:00:00Z"}, "chainValidity": {"notBefore": "2024-03-17T22:42:09Z", "notAfter": "2024-09-06T09:01:43Z"}}]},
-            #  {"asn": "AS38803", "prefix": "1.0.4.0/24", "maxLength": 24, "source": [{"type": "ROA", "uri": "rsync://rpki.apnic.net/member_repository/A9192210/5CA373D8127811EBA8592412C4F9AE02/955B70D2A8C111EC82C6CD3AC4F9AE02.roa", "tal": "ROA-APNIC", "validity": {"notBefore": "2023-05-27T00:36:36Z", "notAfter": "2024-07-30T00:00:00Z"}, "chainValidity": {"notBefore": "2024-03-17T22:42:09Z", "notAfter": "2024-07-30T00:00:00Z"}}]},
             for this_length in range(prefix_ip.prefixlen, cro['maxLength'] + 1):
                 for subnet in list(prefix_ip.subnets(new_prefix=this_length)):
                     if str(subnet) not in agg_set[this_length].keys():
@@ -442,15 +425,10 @@ def aggregate_roas(roas):
                             source_record['type'] = source_i['type']
                             source_record['tal'] = source_i['tal']
                             agg_set[this_length][str(subnet)].append(source_record)
-                    #contian source info is too long, now not record it
-                    #cro：crocro，，
-                    #agg_list[cro['maxLength']]['source'].append(cro['source'])
+                    
 
         for i in range(0, ipv4_len+1):
             for this_prefix_str in agg_set[i].keys():
-                #for each perfix(from short to long)
-                # print(this_prefix_str)
-                # print(i)
                 this_prefix = ipaddress.ip_network(this_prefix_str)
                 maxlength = this_prefix.prefixlen
                 #for each possible maxlength   
@@ -526,28 +504,16 @@ def aggregate_roas(roas):
     f1.write("\"generatedTime\": \"" + str(datetime.now()) + "\"\n")
     f1.write("},\n")
     f1.write("\"roas\": [\n")
-    '''
-    f2 = open(cro_file_v, 'w')
-    f2.write("{\n")
-    f2.write("\"metadata\": {\n")
-    f2.write("\"generated\": " + str(cro_agg_v4_num + cro_v6_num) + ",\n")
-    f2.write("\"generatedTime\": \"" + str(datetime.now()) + "\"\n")
-    f2.write("},\n")
-    f2.write("\"roas\": [\n")
-    '''
+
     for temp in aggregated_roas:
         f1.write("{ \"asn\": \"" + temp['asn'] + "\", \"prefix\": \"" + temp['prefix'] + "\", \"maxLength\": " + str(temp['maxLength']) +", \"source\": [ { \"type\": \"" + temp['source'][0]['type'] + "\", \"tal\": \"" + temp['source'][0]['tal'] + "\"}]},\n")
-        #f2.write("{ \"asn\": \"" + temp['asn'] + "\", \"prefix\": \"" + temp['prefix'] + "\", \"maxLength\": " + str(temp['maxLength']) + ", \"version\": " + "\"ipv4\"" + ", \"source\": [ { \"type\": \"" + temp['source'][0]['type'] + "\", \"tal\": \"" + temp['source'][0]['tal'] + "\"}]},\n")
-
+        
     for temp in aggregated_roas_v6:
         f1.write("{ \"asn\": \"" + temp['asn'] + "\", \"prefix\": \"" + temp['prefix'] + "\", \"maxLength\": " + str(temp['maxLength']) +", \"source\": [ { \"type\": \"" + temp['source'][0]['type'] + "\", \"tal\": \"" + temp['source'][0]['tal'] + "\"}]},\n")
-        #f2.write("{ \"asn\": \"" + temp['asn'] + "\", \"prefix\": \"" + temp['prefix'] + "\", \"maxLength\": " + str(temp['maxLength']) + ", \"version\": " + "\"ipv6\"" + ", \"source\": [ { \"type\": \"" + temp['source'][0]['type'] + "\", \"tal\": \"" + temp['source'][0]['tal'] + "\"}]},\n")
-
+        
     f1.close()
-    #f2.close()
 
     to_cro(0, agg_file)
-    #to_cro(0, cro_file_v)
 
 
 
@@ -567,8 +533,6 @@ def main():
         file = current_directory + "/cro_data/cro_" + current_directory + "_" + content
 
     roa_write_cro(file)
-
-
 
 
     spemap_v4 = {}

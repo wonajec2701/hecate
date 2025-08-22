@@ -152,8 +152,6 @@ def process_roa(f, data, spemap_v4, spemap_v6):
         validity_notAfter = line.split("notAfter\": \"")[1].split("\"")[0]
         chainValidity_notBefore = line.split("chainValidity\"")[1].split("notBefore\": \"")[1].split("\"")[0]
         chainValidity_notAfter = line.split("chainValidity\"")[1].split("notAfter\": \"")[1].split("\"")[0]
-        #if 64512 < asn < 65535:
-        #    print("Error", prefix, asn, maxLength)
         pfx = prefix.split('/')[0]
         pl = int(prefix.split('/')[1].split('\n')[0])
         if ':' in pfx and checkspepfx(spemap_v6, pfx, pl)==True:
@@ -164,14 +162,6 @@ def process_roa(f, data, spemap_v4, spemap_v6):
             continue
         if prefix == '0.0.0.0/0' or prefix == '::/0':
             continue
-        '''
-        if ':' in pfx and pfx in bogon_ip_dict_v6:
-            continue
-        if '.' in pfx and pfx in bogon_ip_dict_v4:
-            continue
-        if asn in bogon_asn:
-            continue
-        '''
         if (prefix, asn, maxLength) not in data:
             data[(prefix, asn, maxLength)] = {}
             data[(prefix, asn, maxLength)]['num'] = 1
@@ -203,14 +193,6 @@ def process_roa_aggregate(f, data, spemap_v4, spemap_v6):
             continue
         if prefix == '0.0.0.0/0' or prefix == '::/0':
             continue
-        '''
-        if ':' in pfx and pfx in bogon_ip_dict_v6:
-            continue
-        if '.' in pfx and pfx in bogon_ip_dict_v4:
-            continue
-        if asn in bogon_asn:
-            continue
-        '''
         maxLength = int(line.split("maxLength\": ")[1].split(",")[0])
         ty_pe = line.split("type\": \"")[1].split("\"")[0]
         uri = line.split("uri\": \"")[1].split("\"")[0]
@@ -268,11 +250,24 @@ def process_asrel(f, asrel, asrel_cus):
         else:
             asrel_cus[int(temp[1])]['provider'].append(int(temp[0]))
 
-def process_asn2n(dic_asncsv, dic_asname, dic_orgid, dic_asn):
-    # construct ASN-Name dict
-    
-    # This block is use the ASN2N.csv https://www.cidr-report.org/as2.0/autnums.html
+def process_bgp_total(file, data):
+    f1 = open(file, 'r')
+    i = 0
+    for line in f1:
+        if i == 0:
+            num = int(line.split('\n')[0])
+            i = 1
+            continue
+        line_list = line.split(' ')
+        prefix = line_list[1]
+        asn = int(line_list[0])
+        day = int(line_list[3].split('\n')[0])
+        if (prefix, asn) not in data:
+            data[(prefix, asn)] = day
+    return num
 
+
+def process_asn2n(dic_asncsv, dic_asname, dic_orgid, dic_asn):
     df_asn2n = pd.read_csv('ASN2N.csv')
     as_list = df_asn2n['ASN'].values.tolist()
     asname_list = df_asn2n['ASName'].values.tolist()

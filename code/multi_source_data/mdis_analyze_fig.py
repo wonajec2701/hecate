@@ -14,7 +14,6 @@ import re
 import copy
 
 current_directory = sys.argv[1]
-#cro_file = current_directory + "/cro_data/cro_" + current_directory
 cro_file = current_directory + "/cro_data/cro_mdis_initial_" + current_directory
 roa_file = current_directory + '/roa_data/' + current_directory + '-0000'
 
@@ -326,12 +325,6 @@ def process_bgp_cad(file, data, spemap_v4, spemap_v6):
         prefix = temp.split(' ')[1]
         pfx = prefix.split('/')[0]
         pl = int(prefix.split('/')[1].split('\n')[0])
-        '''
-        if '.' in prefix and pl > 24:
-            continue
-        if ':' in prefix and pl > 48:
-            continue
-        '''
         if ':' in prefix and checkspepfx(spemap_v6, pfx, pl)==True:
             continue
         if '.' in prefix and checkspepfx(spemap_v4, pfx, pl)==True:
@@ -342,8 +335,6 @@ def process_bgp_cad(file, data, spemap_v4, spemap_v6):
             continue
         if ':' in prefix and '.' in prefix:
             continue
-        #if prefix == '2001:b00::8/128':
-            #print(temp)
         if (prefix, asn) not in data:
             data[(prefix, asn)] = {}
             data[(prefix, asn)]['num'] = 1
@@ -351,12 +342,7 @@ def process_bgp_cad(file, data, spemap_v4, spemap_v6):
             data[(prefix, asn)]['invalid'] = []
 
 def plot_stacked_bar(valid, invalid, unknown, name):
-    '''
-    # 
-    valid = [0.2, 0.3, 0.4]  #  valid 
-    invalid = [0.1, 0.2, 0.1]  #  invalid 
-    unknown = [0.7, 0.5, 0.5]  #  unknown 
-    '''
+
     print(name, valid, invalid, unknown)
     # 1
     total = [1] * len(valid)
@@ -384,8 +370,6 @@ def plot_stacked_bar(valid, invalid, unknown, name):
 def plot_circle(ipv4, ipv6, flag):
     fig, ax = plt.subplots(figsize=(6, 6))
     ax = plt.subplot(projection='polar')
-    #ipv4 = [0.8, 0.1, 0.05]
-    #ipv6 = [0.75, 0.15, 0.1]
     data = [ipv4, ipv6]
     startangle = 90
     colors = ['#4393E5', '#7AE6EA'] #, '#43BAE5'
@@ -822,14 +806,7 @@ def plot_venn(result):
     venn_diagram.get_label_by_id('101').set_text('ROA ∩ BGP: ' + str(int(len(set_A & set_C - set_B) / total_num * 100)) + '%')
     venn_diagram.get_label_by_id('011').set_text('IRR ∩ BGP: ' + str(int(len(set_B & set_C - set_A) / total_num * 100)) + '%')
     venn_diagram.get_label_by_id('111').set_text('ALL: ' + str(int(len(set_A & set_B & set_C) / total_num * 100)) + '%')
-    '''
-    venn_diagram.get_patch_by_id('100').set_edgecolor('white')
-    venn_diagram.get_patch_by_id('010').set_edgecolor('white')
-    venn_diagram.get_patch_by_id('001').set_edgecolor('white')
-    venn_diagram.get_patch_by_id('110').set_edgecolor('white')
-    venn_diagram.get_patch_by_id('011').set_edgecolor('white')
-    venn_diagram.get_patch_by_id('111').set_edgecolor('white')
-    '''
+    
     
     #plt.title('CRO Sources')
     plt.savefig(current_directory+'/analysis/figure/mdis_CRO_sources.pdf')
@@ -909,7 +886,6 @@ def main():
     getspemap(spemap_v4, spemap_v6, private_ip_list_v4, private_ip_list_v6)
 
     data_bgp = {}
-    #process_bgp_cad('/home/cad/rpki/bgpdump/list/total-list-20231210', data_bgp, spemap_v4, spemap_v6)
     year = current_directory.split('-')[0]
     month = current_directory.split('-')[1]
     day = current_directory.split('-')[2]
@@ -939,23 +915,6 @@ def main():
     roa_invalid_now_cro(unknown, data_bgp_cro, data_cro, 'unknown')
 
     
-    #step 7 yesterday
-    '''
-    data_bgp = {}
-    tomorrow = calculate_date(current_directory, 1)
-    year = tomorrow.split('-')[0]
-    month = tomorrow.split('-')[1]
-    day = tomorrow.split('-')[2]
-    timestamp = year+month+day
-    process_bgp(tomorrow+'/bgp_route/checklog/total/total-json-'+timestamp+'.json', data_bgp, spemap_v4, spemap_v6)
-    '''
-    '''
-    yesterday = calculate_date(current_directory, -1)
-    file_name = yesterday + "/cro_data/cro_mdis_initial_" + yesterday
-    result, tal, num_v4, num_v6, data_cro = read_CRO(file_name)
-    results_v4, results_v6 = analyze_validate(data_cro, data_bgp, spemap_v4, spemap_v6, '_tmr')
-    '''
-
     with open(f"{current_directory}/execution_log.txt",'a') as log:
         finish_time = datetime.now()
         finish_timestamp = finish_time.strftime("%Y%m%d %H:%M:%S")

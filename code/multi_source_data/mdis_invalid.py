@@ -135,7 +135,7 @@ def main():
                 printer_json_unknown['validated_routes'].append(json_entry)
         #print(asn_list_unknown)
         print("as_org_list")
-        as_org_list=[0]*401500
+        as_org_list=[0]*411500
         data_lines=as_name.readlines()
         start_line="aut|changed|aut_name|org_id|opaque_id|source"
         start_flag=0
@@ -155,7 +155,7 @@ def main():
             for i in range(0,len(asn_list)):
                 match=re.match(r'AS(.*)',asn_list[i])
                 if match:
-                    if int(match.group(1))>401309:
+                    if int(match.group(1))>411500:
                         #print(int(match.group(1)))
                         invalid_list.append(f"{asn_list[i]} {prefix_list[i]} {invalid_type_list[i]}"+" Private Use AS")
                         continue
@@ -181,7 +181,7 @@ def main():
         for i in range(0,len(asn_list_valid)):
             match=re.match(r'AS(.*)',asn_list_valid[i])
             if match:
-                if int(match.group(1))>401309:
+                if int(match.group(1))>411500:
                     #print(int(match.group(1)))
                     valid_list.append(f"{asn_list_valid[i]} {prefix_list_valid[i]}"+" Private Use AS")
                     continue
