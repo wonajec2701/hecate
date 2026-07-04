@@ -197,9 +197,117 @@ def process_roa(f, data):
             data[(prefix, asn, maxLength)]['type'].append('ROA')
             data[(prefix, asn, maxLength)]['tal'].append('ROA-' + source)
 
+def build_validation_map(data):
+    roamap_v4 = {}
+    roamap_v6 = {}
+    for key in data:
+        prefix = key[0]
+        asn = int(key[1])
+        maxLength = int(key[2])
+        pfx = prefix.split('/')[0]
+        pl = int(prefix.split('/')[1].split('\n')[0])
+        if ':' in prefix:
+            roamap = roamap_v6
+        else:
+            roamap = roamap_v4
+        pfxbin = getpfxbin(pfx, pl)
+        if pl not in roamap:
+            roamap[pl] = {}
+        if pfxbin not in roamap[pl]:
+            roamap[pl][pfxbin] = {}
+            roamap[pl][pfxbin]['num'] = 0
+            roamap[pl][pfxbin]['vrps'] = []
+        roamap[pl][pfxbin]['num'] += 1
+        roamap[pl][pfxbin]['vrps'].append({'asn': asn, 'maxlen': maxLength})
+    return roamap_v4, roamap_v6
+
+def rovproc_single(roamap, pfx, length, asnset):
+    r = 'unknown'
+    pfx_exists = False
+    invalid_list = []
+    for pl in range(length, -1, -1):
+        if pl not in roamap:
+            continue
+        t = pfx[:pl]
+        if t in roamap[pl]:
+            pfx_exists = True
+            vrpset = roamap[pl][t]
+            for v in vrpset['vrps']:
+                if length <= v['maxlen'] and v['asn'] == asnset:
+                    r = 'valid'
+                elif v['asn'] != asnset:
+                    invalid_list.append('invalid_asn')
+                else:
+                    invalid_list.append('invalid_maxlen')
+
+    if pfx_exists and r != 'valid':
+        if 'invalid_asn' in invalid_list:
+            r = 'invalid_asn'
+        elif 'invalid_maxlen' in invalid_list:
+            r = 'invalid_maxlen'
+    return r
+
+def rovproc_irr_single(roamap, pfx, length, asnset):
+    r = 'unknown'
+    invalid_list = []
+    for pl in range(length, -1, -1):
+        if pl not in roamap:
+            continue
+        t = pfx[:pl]
+        if t in roamap[pl]:
+            vrpset = roamap[pl][t]
+            for v in vrpset['vrps']:
+                asn = v['asn']
+                if pl == length and asn == asnset:
+                    invalid_list.append('valid')
+                elif pl == length and asn != asnset:
+                    invalid_list.append('invalid')
+                elif pl < length and asn == asnset:
+                    invalid_list.append('match')
+                elif pl != length and asn != asnset:
+                    invalid_list.append('notmatch')
+                else:
+                    invalid_list.append('unknown')
+
+    if 'valid' in invalid_list:
+        return 'valid'
+    if 'invalid' in invalid_list:
+        return 'invalid'
+    if 'match' in invalid_list:
+        return 'match'
+    if 'notmatch' in invalid_list:
+        return 'notmatch'
+    return r
+
+def rov_single(key, roamap_v4, roamap_v6, flag=''):
+    prefix = key[0]
+    asn = int(key[1])
+    pfx = prefix.split('/')[0]
+    pfxlen = int(prefix.split('/')[1].split('\n')[0])
+    pfxbin = getpfxbin(pfx, pfxlen)
+    if ':' in prefix:
+        if flag == 'irr':
+            return rovproc_irr_single(roamap_v6, pfxbin, pfxlen, asn)
+        return rovproc_single(roamap_v6, pfxbin, pfxlen, asn)
+    if flag == 'irr':
+        return rovproc_irr_single(roamap_v4, pfxbin, pfxlen, asn)
+    return rovproc_single(roamap_v4, pfxbin, pfxlen, asn)
+
+def is_roa_invalid(result):
+    return result.startswith('invalid')
+
+def is_irr_invalid(result):
+    return result in ['invalid', 'notmatch']
+
+def write_bgp_stability_alert(alert_file, prefix, asn, maxLength, roa_rov, irr_rov):
+    with open(alert_file, 'a') as f:
+        f.write(str(asn) + ' ' + prefix + ' ' + str(maxLength) + ' RPKI=' + roa_rov + ' IRR=' + irr_rov + '\n')
+
 def roa_aggregate(data_asn, data):
     #process aggregate
     for key in data_asn:
+        if int(key) == 0:
+            continue
         for maxlen in data_asn[key]:
             networks = []
             temp_list = copy.deepcopy(data_asn[key][maxlen])
@@ -232,7 +340,7 @@ def roa_aggregate(data_asn, data):
                         data[(prefix, asn, maxLength)]['type'].append('roa_aggregate')
                         
 
-def process_bgp_roa_new(f, data, flag='BGP'):
+def process_bgp_roa_new(f, data, flag='BGP', roa_maps=None, irr_maps=None, alert_file=None):
     f1 = open(f, 'r')
     for line in f1:
         try:
@@ -241,6 +349,11 @@ def process_bgp_roa_new(f, data, flag='BGP'):
             maxLength = int(line.split(' ')[2].split('\n')[0])
         except:
             continue
+        if (prefix, asn, maxLength) not in data and roa_maps is not None and irr_maps is not None and alert_file is not None:
+            roa_rov = rov_single((prefix, asn), roa_maps[0], roa_maps[1])
+            irr_rov = rov_single((prefix, asn), irr_maps[0], irr_maps[1], 'irr')
+            if is_roa_invalid(roa_rov) and is_irr_invalid(irr_rov):
+                write_bgp_stability_alert(alert_file, prefix, asn, maxLength, roa_rov, irr_rov)
         if (prefix, asn, maxLength) not in data:
             data[(prefix, asn, maxLength)] = {}
             data[(prefix, asn, maxLength)] = {}
@@ -293,34 +406,47 @@ def main():
 
     #step1: process roa
     print("process roa")
+    data_roa = {}
     valid_roa_file = current_directory + "/roa_data/trash_middle_data/stableroa/valid"
     process_roa(valid_roa_file, data_cro)
+    process_roa(valid_roa_file, data_roa)
     valid_roa_file = current_directory + "/roa_data/trash_middle_data/stableroa/moas"
     process_roa(valid_roa_file, data_cro)
+    process_roa(valid_roa_file, data_roa)
     valid_roa_file = current_directory + "/roa_data/trash_middle_data/stableroa/unknown"
     process_roa(valid_roa_file, data_cro)
+    process_roa(valid_roa_file, data_roa)
+    invalid_roa_file = current_directory + "/roa_data/trash_middle_data/stableroa/invalid-invalid"
+    if os.path.exists(invalid_roa_file):
+        process_roa(invalid_roa_file, data_roa)
     
 
 
     #step2: read irr
     print("process irr")
+    data_irr = {}
     valid_irr_file = current_directory + "/irr_data/trash_middle_data/stableirr/valid"
     process_irr(valid_irr_file, data_cro)
+    process_irr(valid_irr_file, data_irr)
     #valid_irr_file = current_directory + "/irr_data/trash_middle_data/stableirr/moas"
     #process_irr(valid_irr_file, data_cro)
+    roa_maps = build_validation_map(data_roa)
+    irr_maps = build_validation_map(data_irr)
 
     #step3: read bgp
     print("process bgp")
     data_cro_default = copy.deepcopy(data_cro)
     bgp_file = '/home/demo/multi_source_data/' + current_directory + "/bgp_filter_data/bgp_frequent"
-    process_bgp_roa_new(bgp_file, data_cro_default, flag='BGP')
+    open(current_directory + "/cro_data/alert_bgp_stability_conflict", 'w').close()
+    process_bgp_roa_new(bgp_file, data_cro_default, flag='BGP', roa_maps=roa_maps, irr_maps=irr_maps, alert_file=current_directory + "/cro_data/alert_bgp_stability_conflict")
     write_cro(data_cro_default, cro_file)
     
     #local record
     data_cro_67 = copy.deepcopy(data_cro)
     bgp_file = '/home/demo/multi_source_data/' + current_directory + "/bgp_filter_data/bgp_frequent_67"
     if os.path.exists(bgp_file):
-        process_bgp_roa_new(bgp_file, data_cro_67, flag='BGP')
+        open(current_directory + "/cro_data/alert_bgp_stability_conflict_67", 'w').close()
+        process_bgp_roa_new(bgp_file, data_cro_67, flag='BGP', roa_maps=roa_maps, irr_maps=irr_maps, alert_file=current_directory + "/cro_data/alert_bgp_stability_conflict_67")
         write_cro(data_cro_67, cro_file + "_67")
 
     

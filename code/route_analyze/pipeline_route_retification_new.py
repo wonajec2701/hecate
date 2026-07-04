@@ -725,6 +725,49 @@ def checkASc2p(as1, as2, asrel, asrel_cus):
     
     return False
 
+def collapse_consecutive_asns(path_list):
+    collapsed_path = []
+    for asn in path_list:
+        if asn == '':
+            continue
+        if len(collapsed_path) == 0 or collapsed_path[-1] != asn:
+            collapsed_path.append(asn)
+    return collapsed_path
+
+def path_allows_vrp_as(path_list, vrp_as):
+    collapsed_path = collapse_consecutive_asns(path_list)
+    vrp_as = str(vrp_as)
+    if vrp_as not in collapsed_path:
+        return False
+    return collapsed_path.count(vrp_as) == 1
+
+def has_as0_conflict(item):
+    for temp in item['detail']:
+        try:
+            if int(temp[1]) == 0:
+                return True
+        except:
+            continue
+    return False
+
+def format_invalid_detail(item):
+    write_str = ''
+    for temp in item['detail']:
+        write_str += '[' + temp[0] + ', ' + str(temp[1]) + ', ' + str(temp[2]) + ', ' + temp[3] + '] '
+    return write_str
+
+def write_as0_conflict_alert(key, item, roa_rov, f_invalid, f_unknown):
+    write_str = key[0] + ', ' + str(key[1]) + ', ' + item['result'] + ', ' + roa_rov + ', AS0-conflict: '
+    write_str += format_invalid_detail(item)
+    with lock_record:
+        with open('/home/demo/route_analyze/cro_data/as0_conflict_alert_local', 'a') as f:
+            f.write(date.today().strftime("%Y-%m-%d") + ', ' + write_str + '\n')
+
+    if item['result'] == 'unknown':
+        f_unknown.write(date.today().strftime("%Y-%m-%d") + ', ' + key[0] + ', ' + str(key[1]) + '\n')
+    else:
+        f_invalid.write(date.today().strftime("%Y-%m-%d") + ', ' + write_str + '\n')
+
 def get_notsure_score(key, item, roa_rov, f_invalid):
     
     #irr
@@ -867,6 +910,7 @@ def retification(data_nonvalid):
     num_score = 0
     num_path = 0
     num_high = 0
+    num_as0_conflict = 0
     f_invalid = open('/home/demo/route_analyze/cro_data/still_invalid_local', 'a')
     f_unknown = open('/home/demo/route_analyze/cro_data/still_unknown_local', 'a')
     f_new_valid = open('/home/demo/route_analyze/cro_data/new_valid_local', 'a')
@@ -897,6 +941,11 @@ def retification(data_nonvalid):
                 with open(record_file, 'a') as f:
                     line = item['date'] + ' ' + item['timestamp']  + ' ' + 'low    ' + ' ' + str(key[1])  + ' ' + key[0]  + ' ' + item['new_reason'] + ' ' + write_str  + ' [' + item['path'] + ']'
                     f.write(line + '\n')
+            continue
+
+        if has_as0_conflict(item):
+            num_as0_conflict += 1
+            write_as0_conflict_alert(key, item, roa_rov, f_invalid, f_unknown)
             continue
             
         #step1 aggregate
@@ -1029,7 +1078,7 @@ def retification(data_nonvalid):
         #step5 ROA_AS in AS_PATH
         path_list = item['path'].split(' ')[:-1]
         for temp in item['detail']:
-            if str(temp[1]) in path_list:
+            if path_allows_vrp_as(path_list, temp[1]):
                 item['new_result'] = 'valid'
                 item['new_reason'] = 'path'
                 break
@@ -1083,6 +1132,8 @@ def retification(data_nonvalid):
     write_str = write_str + ' reason: ' + str(num_roa) + ' ' + str(num_aggregate) + ' ' + str(num_length) + ' ' + str(num_asrel) + ' ' + str(num_sameas) + ' ' + str(num_path) + ' ' + str(num_score)
     f_record.write(write_str + '\n')
     write_str = 'high level: ' + str(num_high)
+    f_record.write(write_str + '\n')
+    write_str = 'AS0 conflict alert: ' + str(num_as0_conflict)
     f_record.write(write_str + '\n')
     f_record.close()
 

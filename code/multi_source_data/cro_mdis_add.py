@@ -198,6 +198,8 @@ def process_roa(f, data, flag='ROA'):
 def roa_aggregate(data_asn, data):
     #process aggregate
     for key in data_asn:
+        if int(key) == 0:
+            continue
         for maxlen in data_asn[key]:
             networks = []
             temp_list = copy.deepcopy(data_asn[key][maxlen])
@@ -389,6 +391,21 @@ def aggregate_roas(roas):
     for roa in roas:
         asn = roa['asn']
         prefix = roa['prefix']
+        asn_int = int(str(asn).replace('AS', ''))
+        if asn_int == 0:
+            this_record = {}
+            this_record['asn'] = roa['asn']
+            this_record['prefix'] = roa['prefix']
+            this_record['maxLength'] = roa['maxLength']
+            this_record['source'] = roa['source']
+            if ':' in prefix:
+                cro_v6_num += 1
+                aggregated_roas_v6.append(this_record)
+            else:
+                cro_v4_num += 1
+                cro_agg_v4_num += 1
+                aggregated_roas.append(this_record)
+            continue
         if ':' in prefix:
             # print("Not process IPv6")
             this_record = {}

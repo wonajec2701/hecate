@@ -303,6 +303,8 @@ def read_roa_aggregate(filename, data_aggregate):
             prefix = str(line_list[1])
             asn = int(line_list[0])
             maxLength = int(line_list[2])
+            if asn == 0:
+                continue
             if (prefix, asn, maxLength) not in data_aggregate:
                 data_aggregate[(prefix, asn, maxLength)] = {}
                 data_aggregate[(prefix, asn, maxLength)]['type'] = ['roa_aggregate']
@@ -312,6 +314,8 @@ def read_roa_aggregate(filename, data_aggregate):
 
 def roa_aggregate_split(lock, data_asn, data, data_aggregate):
     for key in data_asn:
+        if int(key) == 0:
+            continue
         for maxlen in data_asn[key]:
             networks = []
             temp_list = copy.deepcopy(data_asn[key][maxlen])
@@ -390,6 +394,32 @@ def roa_aggregate(data_asn, data):
         os.system(f'cp {read_filename} /home/demo/route_analyze/cro_data/cro_aggregate')
     
     return data_aggregate
+
+def has_as0_conflict(item):
+    for temp in item['detail']:
+        try:
+            if int(temp[1]) == 0:
+                return True
+        except:
+            continue
+    return False
+
+def format_invalid_detail(item):
+    write_str = ''
+    for temp in item['detail']:
+        write_str += '[' + temp[0] + ', ' + str(temp[1]) + ', ' + str(temp[2]) + ', ' + temp[3] + '] '
+    return write_str
+
+def write_as0_conflict_alert(key, item, roa_rov, f_invalid, f_unknown):
+    write_str = key[0] + ', ' + str(key[1]) + ', ' + item['result'] + ', ' + roa_rov + ', AS0-conflict: '
+    write_str += format_invalid_detail(item)
+    with open(current_directory + '/cro_data/as0_conflict_alert_' + content, 'a') as f:
+        f.write(write_str + '\n')
+
+    if item['result'] == 'unknown':
+        f_unknown.write(key[0] + ', ' + str(key[1]) + '\n')
+    else:
+        f_invalid.write('AS0-conflict, ' + key[0] + ', ' + str(key[1]) + ', ' + roa_rov + ', 0, 0, 0, None, 0, ' + write_str + '\n')
 
 def get_notsure_score(key, irrmap_v4, irrmap_v6, data_bgp_total, bgp_day_max, reachable_v_u, data_as_country, as2org, flag, f_valid_invalid, f_valid_unknown, f_invalid, f_unknown, item, roa_rov, anomaly_route):
     score = 0
@@ -634,6 +664,7 @@ def retification(data_cro, data_cro_asn, invalid, unknown, reachable_v_u):
     num_asrel = 0
     num_sameas = 0
     num_irr = 0
+    num_as0_conflict = 0
     f_valid_invalid = open(current_directory + '/cro_data/roa_invalid_cro_valid_' + content, 'w')
     f_valid_invalid.write('{\"routes\": [')
     f_valid_unknown = open(current_directory + '/cro_data/roa_unknown_cro_valid_' + content, 'w')
@@ -663,6 +694,11 @@ def retification(data_cro, data_cro_asn, invalid, unknown, reachable_v_u):
             elif key[0] not in reachable_v_u[int(key[1])]:
                 reachable_v_u[int(key[1])].append(key[0])
             #f_valid.write('{\"BGP Route Prefix\": \"' + key[0] + '\", \"ASN\": \"AS' + str(key[1]) + '\", \"Result\": \"' + roa_rov + '\", \"Source\": \"' + 'DCS' + '\"},\n')
+            continue
+
+        if has_as0_conflict(item):
+            num_as0_conflict += 1
+            write_as0_conflict_alert(key, item, roa_rov, f_invalid, f_unknown)
             continue
         
         if 'invalid' in roa_rov:
@@ -777,6 +813,7 @@ def retification(data_cro, data_cro_asn, invalid, unknown, reachable_v_u):
         total_num = len(data_aggregate)
         log.write(f"{finish_timestamp} route retification, total invalid & unknwon records: {len(invalid_unknown)}\n")
         log.write(f"roa-valid: {num_roa}, aggregate: {num_aggregate}, length: {num_length}, asrel: {num_asrel}, sameas: {num_sameas}, total: {num_roa + num_aggregate + num_length + num_asrel + num_sameas}\n")
+        log.write(f"AS0 conflict alerts: {num_as0_conflict}\n")
         log.write(f"{content}, still invalid: {still_invalid}, still unknown: {still_unknown}, retification rate: {(len(invalid_unknown) - still_invalid - still_unknown) * 100 / len(invalid_unknown):.2f}%.\n")
         
 

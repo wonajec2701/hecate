@@ -12,6 +12,8 @@ content = sys.argv[2]
 
 def roa_aggregate_split(lock, data_asn, data, data_aggregate):
     for key in data_asn:
+        if int(key) == 0:
+            continue
         for maxlen in data_asn[key]:
             networks = []
             temp_list = copy.deepcopy(data_asn[key][maxlen])
