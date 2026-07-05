@@ -210,16 +210,10 @@ def get_path_unmatched_as(total_as_prefix_dict,asn,prefix,invalid_as_path_dict,t
         is_allocation_flag=5#same_org
         recovery_roa_output.write(f"{asn} {prefix} {record_as} same_org"+"\n")
         return as_path,is_allocation_flag,competitor_flag
-    #roa_as in path
+    # The offline CRO construction no longer promotes routes solely because a
+    # VRP AS appears in AS_PATH; this evidence is used only in DCS with
+    # exact-prefix IRR corroboration and AS-loop sanity checks.
     as_path=invalid_as_path_dict[(str(asn),prefix)]
-    for as_path_to_check in as_path:
-        numbers=as_path_to_check
-        for item in valid_as:
-            if str(item) in numbers:#roa as in path
-                as_path="sure"
-                is_allocation_flag=1#as_relationship
-                recovery_roa_output.write(f"{asn} {prefix} {item} path={as_path_to_check} roa_as in path"+"\n")
-                return as_path,is_allocation_flag,competitor_flag
     #competitor:single_host
     roa_competitor_as=set()
     parent_competitor_set=set()

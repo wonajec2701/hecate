@@ -739,7 +739,18 @@ def path_allows_vrp_as(path_list, vrp_as):
     vrp_as = str(vrp_as)
     if vrp_as not in collapsed_path:
         return False
-    return collapsed_path.count(vrp_as) == 1
+    if collapsed_path.count(vrp_as) > 1:
+        return False
+
+    vrp_index = collapsed_path.index(vrp_as)
+    first_seen = {}
+    for index, asn in enumerate(collapsed_path):
+        if asn not in first_seen:
+            first_seen[asn] = index
+            continue
+        if first_seen[asn] < vrp_index < index:
+            return False
+    return True
 
 def has_as0_conflict(item):
     for temp in item['detail']:
@@ -1075,13 +1086,16 @@ def retification(data_nonvalid):
                     f.write(line + '\n')
             continue
         
-        #step5 ROA_AS in AS_PATH
-        path_list = item['path'].split(' ')[:-1]
-        for temp in item['detail']:
-            if path_allows_vrp_as(path_list, temp[1]):
-                item['new_result'] = 'valid'
-                item['new_reason'] = 'path'
-                break
+        #step5 exact-prefix IRR-valid plus ROA_AS in AS_PATH
+        with lock_irr:
+            irr_rov = rov_single(key, irrmap_v4, irrmap_v6, 'irr', {}, {})
+        if irr_rov == 'valid':
+            path_list = item['path'].split(' ')[:-1]
+            for temp in item['detail']:
+                if path_allows_vrp_as(path_list, temp[1]):
+                    item['new_result'] = 'valid'
+                    item['new_reason'] = 'path'
+                    break
         if item['new_result'] == 'valid':
             num_path += 1
             valid_list[key] = 0
